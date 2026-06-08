@@ -1,6 +1,8 @@
 server {
     server_name funfriday.co.in www.funfriday.co.in;
-
+    if ($http_referer ~* "croozi\.com") {
+        return 444;
+    }
     # 1. Forward all API requests directly to the Java Backend Engine
     location /api {
         proxy_pass http://127.0.0.1:8080;
