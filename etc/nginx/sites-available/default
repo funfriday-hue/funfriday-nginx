@@ -1,26 +1,49 @@
+# =========================================================================
+# 1. GLOBAL CATCH-ALL FOR UNDEFINED HTTP TRAFFIC (PORT 80)
+# Instantly drops connections from rogue domains like croozi.com over HTTP
+# =========================================================================
+server {
+    listen 80 default_server;
+    listen [::]:80 default_server;
+    server_name _;
+
+    return 444; 
+}
+
+# =========================================================================
+# 2. GLOBAL CATCH-ALL FOR UNDEFINED HTTPS TRAFFIC (PORT 443)
+# Rejects the SSL Handshake completely so unmapped domains get an SSL error
+# instead of your Next.js application content.
+# =========================================================================
+server {
+    listen 443 ssl default_server;
+    listen [::]:443 ssl default_server;
+    server_name _;
+
+    ssl_reject_handshake on;
+}
+
+# =========================================================================
+# 3. PRODUCTION SEVER BLOCK: FUNFRIDAY PRODUCTION (HTTPS)
+# =========================================================================
 server {
     server_name funfriday.co.in www.funfriday.co.in;
     
-# 1. STOP IFRAME EMBEDDING (Fixes them loading your homepage in a frame)
+    # Stop iframe embedding / mirroring
     add_header X-Frame-Options "SAMEORIGIN" always;
     add_header Content-Security-Policy "frame-ancestors 'self';" always;
 
-    # 2. BLOCK THE SCRAPER BOT IDENTIFIED IN YOUR LOGS
+    # Block known bot variations
     if ($http_user_agent ~* (TikTokSpider|ttspider)) {
         return 444;
     }
 
-    # 3. BLOCK THE CROOZI REFERER (Your existing rule)
-    if ($http_referer ~* "croozi\.com") {
-        return 444;
-    }
-
-    # 4. INSTANTLY DROP ALL SPAM /Business TRAFFIC
+    # Instantly drop legacy scrapers / residual spam paths
     location ~* ^/Business {
         return 444;
     }
 
-# 1. Forward all API requests directly to the Java Backend Engine
+    # 1. Forward all API requests directly to the Java Backend Engine
     location /api {
         proxy_pass http://127.0.0.1:8080;
         proxy_http_version 1.1;
@@ -70,18 +93,15 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/funfriday.co.in/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-
-
 }
+
+# =========================================================================
+# 4. PRODUCTION SERVER BLOCK: FUNFRIDAY SSL REDIRECT (HTTP TO HTTPS)
+# =========================================================================
 server {
     listen 80;
     listen [::]:80;
     server_name funfriday.co.in www.funfriday.co.in;
-
-    # REJECT CROOZI ON HTTP (Saves server processing before doing the 301 redirect)
-    if ($http_referer ~* "croozi\.com") {
-        return 444;
-    }
 
     if ($host = www.funfriday.co.in) {
         return 301 https://$host$request_uri;
