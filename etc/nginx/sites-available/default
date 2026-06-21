@@ -57,22 +57,22 @@ server {
 
 }
 server {
+    listen 80;
+    listen [::]:80;
+    server_name funfriday.co.in www.funfriday.co.in;
+
+    # REJECT CROOZI ON HTTP (Saves server processing before doing the 301 redirect)
+    if ($http_referer ~* "croozi\.com") {
+        return 444;
+    }
+
     if ($host = www.funfriday.co.in) {
         return 301 https://$host$request_uri;
     } # managed by Certbot
-
 
     if ($host = funfriday.co.in) {
         return 301 https://$host$request_uri;
     } # managed by Certbot
 
-
-    listen 80;
-    listen [::]:80;
-    server_name funfriday.co.in www.funfriday.co.in;
     return 404; # managed by Certbot
-
-
-
-
 }
