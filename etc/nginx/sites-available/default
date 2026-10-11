@@ -24,7 +24,37 @@ server {
 }
 
 # =========================================================================
-# 3. PRODUCTION SEVER BLOCK: FUNFRIDAY PRODUCTION (HTTPS)
+# 3. JLPT QUIZ BOOTSTRAP (HTTP)
+#
+# This block intentionally starts on HTTP so Certbot can obtain the first
+# certificate without Nginx referencing certificate files that do not exist
+# yet. After deploying this configuration, run:
+#   sudo certbot --nginx -d jlptquiz.in -d www.jlptquiz.in --redirect
+# Then copy Certbot's resulting live configuration back into this repository.
+# =========================================================================
+server {
+    listen 80;
+    listen [::]:80;
+    server_name jlptquiz.in www.jlptquiz.in;
+
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    location / {
+        proxy_pass http://127.0.0.1:3200;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 60s;
+        proxy_send_timeout 60s;
+    }
+}
+
+# =========================================================================
+# 4. PRODUCTION SERVER BLOCK: FUNFRIDAY PRODUCTION (HTTPS)
 # =========================================================================
 server {
     server_name funfriday.co.in www.funfriday.co.in;
@@ -117,7 +147,7 @@ server {
 }
 
 # =========================================================================
-# 4. PRODUCTION SERVER BLOCK: FUNFRIDAY SSL REDIRECT (HTTP TO HTTPS)
+# 5. PRODUCTION SERVER BLOCK: FUNFRIDAY SSL REDIRECT (HTTP TO HTTPS)
 # =========================================================================
 server {
     listen 80;
