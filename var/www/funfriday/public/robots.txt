@@ -1,4 +1,11 @@
-# Allow all bots to crawl everything
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /audit
+Disallow: /review
+Disallow: /create/
+Disallow: /metrics
+Disallow: /mission
+Disallow: /room/
 
+Sitemap: https://funfriday.co.in/sitemap.xml
